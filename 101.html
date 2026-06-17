@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    
+    <title>© 2026 Защищенное перенаправление трафика</title>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Переход на официальный сайт партнера">
+    <meta property="og:description" content="Пожалуйста, подождите, идет проверка безопасности соединения...">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%); 
+            display: flex; justify-content: center; align-items: center; height: 100vh; color: #333; 
+        }
+        .redirect-container {
+            background: #ffffff; padding: 40px 30px; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); text-align: center; max-width: 400px; width: 90%;
+        }
+        .logo-area { 
+            margin-bottom: 25px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60px;
+        }
+        .logo-img {
+            max-width: 200px;
+            max-height: 70px;
+            object-fit: contain;
+        }
+        .loader-ring {
+            display: inline-block; width: 50px; height: 50px; border: 3px solid rgba(52, 152, 219, 0.1);
+            border-radius: 50%; border-top-color: #3498db; animation: spin 1s linear infinite; margin: 20px 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #2c3e50; }
+        p { font-size: 14px; color: #7f8c8d; line-height: 1.5; }
+        .status-msg { font-size: 12px; color: #3498db; margin-top: 5px; font-weight: 500; }
+        .footer-note { margin-top: 30px; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #95a5a6; }
+    </style>
+</head>
+<body>
+
+    <div class="redirect-container">
+        <div class="logo-area">
+            <img src="https://thumb.cloud.mail.ru/weblink/thumb/xw1/TfKk/QGyS93cW7/PNG%20-%20digital/VK%20Logo.png?mt=1684832836000" alt="Логотип" class="logo-img" onerror="this.style.display='none';">
+        </div>
+
+        <div class="loader-ring" id="loader"></div>
+
+        <h2 id="title">Проверка соединения...</h2>
+        <p id="desc">Вы перенаправляетесь на сайт партнера. <br>Это займет не более 3 секунд.</p>
+        <div id="status" class="status-msg"></div>
+
+        <div class="footer-note">
+            Ссылка проверена системой безопасности. <br>
+            © 2026 Защищенное распределение трафика.
+        </div>
+    </div>
+
+    <script>
+        async function checkUrlAccessible(url) {
+            try {
+                await fetch(url, { mode: 'no-cors', cache: 'no-store', timeout: 3000 });
+                return true; 
+            } catch (error) {
+                return false; 
+            }
+        }
+
+        async function startRedirection() {
+            const titleEl = document.getElementById('title');
+            const descEl = document.getElementById('desc');
+            const statusEl = document.getElementById('status');
+            const loaderEl = document.getElementById('loader');
+
+            let targetUrls = [];
+
+            try {
+                const response = await fetch('./urls2.json', { cache: 'no-store' });
+                targetUrls = await response.json();
+            } catch (e) {
+                titleEl.innerText = "Ошибка конфигурации";
+                descEl.innerText = "Не удалось загрузить список целевых серверов.";
+                statusEl.innerText = "Ошибка: Сбой чтения конфигурационного файла.";
+                statusEl.style.color = "#e74c3c";
+                if(loaderEl) loaderEl.style.display = 'none';
+                return;
+            }
+
+            if (!targetUrls || targetUrls.length === 0) {
+                titleEl.innerText = "Список пуст";
+                descEl.innerText = "В конфигурационном файле не найдено активных адресов.";
+                statusEl.innerText = "Ошибка: Нет данных.";
+                statusEl.style.color = "#e74c3c";
+                if(loaderEl) loaderEl.style.display = 'none';
+                return;
+            }
+
+            titleEl.innerText = "Анализ сети...";
+            
+            for (let i = 0; i < targetUrls.length; i++) {
+                const currentUrl = targetUrls[i];
+                
+                try {
+                    const domainName = new URL(currentUrl).hostname;
+                    statusEl.innerText = `Проверка узла: vk.com/...`;
+
+                    const isAlive = await checkUrlAccessible(currentUrl);
+
+                    if (isAlive) {
+                        titleEl.innerText = "Соединение установлено";
+                        descEl.innerHTML = `Вы перенаправляетесь на сайт партнера.
+Это займет не более 3 секунд.`;
+                        statusEl.innerText = `Статус: Безопасное подключение`;
+                        statusEl.style.color = "#2ecc71";
+
+                        setTimeout(() => {
+                            window.location.replace(currentUrl);
+                        }, 3000);
+                        return; 
+                    }
+                } catch(urlErr) {
+                    continue;
+                }
+            }
+
+            titleEl.innerText = "Технические работы";
+            descEl.innerText = "К сожалению, все серверы в данный момент перегружены или недоступны.";
+            statusEl.innerText = "Ошибка: Нет доступных шлюзов.";
+            statusEl.style.color = "#e74c3c";
+            if(loaderEl) loaderEl.style.display = 'none';
+        }
+
+        window.onload = startRedirection;
+    </script>
+</body>
+</html>
