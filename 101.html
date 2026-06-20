@@ -23,15 +23,10 @@
         }
         .logo-area { 
             margin-bottom: 25px; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 60px;
+            display: flex; justify-content: center; align-items: center; min-height: 60px;
         }
         .logo-img {
-            max-width: 200px;
-            max-height: 70px;
-            object-fit: contain;
+            max-width: 200px; max-height: 70px; object-fit: contain;
         }
         .loader-ring {
             display: inline-block; width: 50px; height: 50px; border: 3px solid rgba(52, 152, 219, 0.1);
@@ -40,8 +35,55 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #2c3e50; }
         p { font-size: 14px; color: #7f8c8d; line-height: 1.5; }
-        .status-msg { font-size: 12px; color: #3498db; margin-top: 5px; font-weight: 500; }
+        .status-msg { font-size: 12px; color: #3498db; margin-top: 10px; font-weight: 500; }
         .footer-note { margin-top: 30px; padding-top: 20px; border-top: 1px solid #edf2f7; font-size: 12px; color: #95a5a6; }
+
+        /* СТИЛИ ДЛЯ ИМИТАЦИИ КАПЧИ */
+        .captcha-box {
+            display: none; /* Изначально скрыта */
+            background: #f9f9f9;
+            border: 1px solid #dcdcdc;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 300px;
+            align-items: center;
+            justify-content: space-between;
+            text-align: left;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .captcha-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .captcha-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #3498db;
+        }
+        .captcha-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            user-select: none;
+            cursor: pointer;
+        }
+        .captcha-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 10px;
+            color: #7f8c8d;
+        }
+        .captcha-icon {
+            width: 26px;
+            height: 26px;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/a/ad/RecaptchaAnchor.svg') no-repeat center;
+            background-size: contain;
+            margin-bottom: 2px;
+        }
     </style>
 </head>
 <body>
@@ -53,8 +95,20 @@
 
         <div class="loader-ring" id="loader"></div>
 
+        <div class="captcha-box" id="captchaBox">
+            <div class="captcha-left">
+                <input type="checkbox" id="captchaCheck" class="captcha-checkbox">
+                <label for="captchaCheck" class="captcha-text">Я не робот</label>
+            </div>
+            <div class="captcha-right">
+                <div class="captcha-icon"></div>
+                <span>Защита</span>
+                <span>конфиденциальности</span>
+            </div>
+        </div>
+
         <h2 id="title">Проверка соединения...</h2>
-        <p id="desc">Вы перенаправляетесь на сайт партнера. <br>Это займет не более 3 секунд.</p>
+        <p id="desc">Пожалуйста, подождите, идет анализ сетевых шлюзов.</p>
         <div id="status" class="status-msg"></div>
 
         <div class="footer-note">
@@ -78,9 +132,12 @@
             const descEl = document.getElementById('desc');
             const statusEl = document.getElementById('status');
             const loaderEl = document.getElementById('loader');
+            const captchaBoxEl = document.getElementById('captchaBox');
+            const captchaCheckEl = document.getElementById('captchaCheck');
 
             let targetUrls = [];
 
+            // 1. Подгружаем конфигурацию ссылок
             try {
                 const response = await fetch('./urls2.json', { cache: 'no-store' });
                 targetUrls = await response.json();
@@ -103,38 +160,64 @@
             }
 
             titleEl.innerText = "Анализ сети...";
+            let activeUrl = null;
             
+            // 2. Ищем доступный рабочий домен
             for (let i = 0; i < targetUrls.length; i++) {
                 const currentUrl = targetUrls[i];
-                
                 try {
-                    const domainName = new URL(currentUrl).hostname;
                     statusEl.innerText = `Проверка узла: vk.com/...`;
-
                     const isAlive = await checkUrlAccessible(currentUrl);
 
                     if (isAlive) {
-                        titleEl.innerText = "Соединение установлено";
-                        descEl.innerHTML = `Вы перенаправляетесь на сайт партнера.
-Это займет не более 3 секунд.`;
-                        statusEl.innerText = `Статус: Безопасное подключение`;
-                        statusEl.style.color = "#2ecc71";
-
-                        setTimeout(() => {
-                            window.location.replace(currentUrl);
-                        }, 3000);
-                        return; 
+                        activeUrl = currentUrl;
+                        break; // Рабочая ссылка найдена, останавливаем поиск
                     }
                 } catch(urlErr) {
                     continue;
                 }
             }
 
-            titleEl.innerText = "Технические работы";
-            descEl.innerText = "К сожалению, все серверы в данный момент перегружены или недоступны.";
-            statusEl.innerText = "Ошибка: Нет доступных шлюзов.";
-            statusEl.style.color = "#e74c3c";
-            if(loaderEl) loaderEl.style.display = 'none';
+            // 3. Если живой домен найден
+            if (activeUrl) {
+                // Прячем стандартную крутилку и показываем блок капчи
+                if(loaderEl) loaderEl.style.display = 'none';
+                captchaBoxEl.style.display = 'flex';
+                
+                titleEl.innerText = "Подтвердите действие";
+                descEl.innerText = "Чтобы продолжить переход на сайт партнера, подтвердите, что вы не являетесь роботом.";
+                statusEl.innerText = "";
+
+                // Вешаем событие на клик по чекбоксу капчи
+                captchaCheckEl.addEventListener('change', function() {
+                    if (this.checked) {
+                        // Делаем чекбокс недоступным для повторного клика
+                        captchaCheckEl.disabled = true;
+                        
+                        // Возвращаем крутилку и меняем тексты
+                        captchaBoxEl.style.display = 'none';
+                        if(loaderEl) loaderEl.style.display = 'inline-block';
+                        
+                        titleEl.innerText = "Соединение установлено";
+                        descEl.innerHTML = `Вы перенаправляетесь на сайт партнера.<br>Это займет не более 3 секунд.`;
+                        statusEl.innerText = `Статус: Безопасное подключение`;
+                        statusEl.style.color = "#2ecc71";
+
+                        // Запускаем финальный таймер редиректа
+                        setTimeout(() => {
+                            window.location.replace(activeUrl);
+                        }, 3000);
+                    }
+                });
+
+            } else {
+                // Если ни один домен из списка не ответил
+                titleEl.innerText = "Технические работы";
+                descEl.innerText = "К сожалению, все серверы в данный момент перегружены или недоступны.";
+                statusEl.innerText = "Ошибка: Нет доступных шлюзов.";
+                statusEl.style.color = "#e74c3c";
+                if(loaderEl) loaderEl.style.display = 'none';
+            }
         }
 
         window.onload = startRedirection;
